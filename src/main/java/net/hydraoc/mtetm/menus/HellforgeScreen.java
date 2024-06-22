@@ -1,8 +1,8 @@
 package net.hydraoc.mtetm.menus;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
 import net.hydraoc.mtetm.MoreTetraMaterials;
-import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.network.chat.Component;
@@ -13,72 +13,69 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public class HellforgeScreen extends AbstractContainerScreen<HellforgeMenu> {
-    //Stores the texture location
     private static final ResourceLocation TEXTURE =
-            new ResourceLocation(MoreTetraMaterials.MOD_ID, "textures/gui/hellforge_gui.png");
+            new ResourceLocation(MoreTetraMaterials.MOD_ID,"textures/gui/hellforge_gui.png");
 
-    public HellforgeScreen(HellforgeMenu pMenu, Inventory pPlayerInventory, Component pTitle) {
-        super(pMenu, pPlayerInventory, pTitle);
+    public HellforgeScreen(HellforgeMenu menu, Inventory inventory, Component component) {
+        super(menu, inventory, component);
     }
 
-    //new image width and height variable declaration
     int imageWidth = 171;
     int imageHeight = 173;
 
     @Override
     protected void init() {
         super.init();
-        this.inventoryLabelY = 10000;
-        this.titleLabelY = 10000;
     }
 
-    //Main renderBg method for the class, contains calls to the rest of the rendering methods that require custom logic
     @Override
-    protected void renderBg(GuiGraphics guiGraphics, float pPartialTick, int pMouseX, int pMouseY) {
+    protected void renderBg(PoseStack poseStack, float pPartialTick, int pMouseX, int pMouseY) {
         RenderSystem.setShader(GameRenderer::getPositionTexShader);
         RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
         RenderSystem.setShaderTexture(0, TEXTURE);
         int x = (width - 176) / 2;
         int y = (height - 166) / 2;
 
-        guiGraphics.blit(TEXTURE, x, y, 0, 0, imageWidth, imageHeight);
-        renderFuelBar(guiGraphics,x+146,y+50);
-        renderProgressArrow(guiGraphics,x+54,y+29);
-        renderColorBars(guiGraphics,x,y);
+        this.blit(poseStack, x, y, 0, 0, imageWidth, imageHeight);
+        renderFuelBar(poseStack,x+146,y+50);
+        renderProgressArrow(poseStack,x+54,y+29);
+        renderColorBars(poseStack,x,y);
     }
 
     //Renders the fuel bar
-    private void renderFuelBar(GuiGraphics guiGraphics, int x, int y) {
+    private void renderFuelBar(PoseStack pPoseStack, int x, int y) {
         if(menu.isLit()) {
             int fuel = menu.getLitProgress();
-            guiGraphics.blit(TEXTURE, x, y-fuel, 172, 50-fuel, 13, fuel);
+            blit(pPoseStack, x, y-fuel, 172, 50-fuel, 13, fuel);
         }
     }
 
-    //Renders the crafting progress arrow
-    private void renderProgressArrow(GuiGraphics guiGraphics, int x, int y) {
-        int progress = (this.menu).getBurnProgress();
-        guiGraphics.blit(TEXTURE, x, y, 0, 174, progress, 16);
+    private void renderProgressArrow(PoseStack pPoseStack, int x, int y) {
+        if(menu.isCrafting()) {
+            int progress = (this.menu).getBurnProgress();
+            blit(pPoseStack, x, y, 0, 174, progress, 16);
+        }
     }
 
     //Renders the color bars for the menu (Like 7 pixels, but needed its own handler)
-    private void renderColorBars(GuiGraphics guiGraphics, int x , int y){
+    private void renderColorBars(PoseStack poseStack, int x , int y){
         int fuel = menu.getLitProgress();
         if(menu.isLit()) {
-            guiGraphics.blit(TEXTURE, x + 148, y + 7, 171, 7, 1, 3);
-            guiGraphics.blit(TEXTURE, x + 135, y + 37, 171, 11, 5, 1);
+            blit(poseStack, x + 148, y + 7, 171, 7, 1, 3);
+            blit(poseStack, x + 135, y + 37, 171, 11, 5, 1);
             if(menu.getBurnProgress()>0 || (menu.getSlot(2).hasItem() && menu.getSlot(0).hasItem())) {
-                guiGraphics.blit(TEXTURE, x + 114, y + 34, 177, 5, 17, 7);
+                blit(poseStack, x + 114, y + 34, 177, 5, 17, 7);
             }else{
-                guiGraphics.blit(TEXTURE, x + 114, y + 34, 114, 34, 17, 7);
+                blit(poseStack, x + 114, y + 34, 114, 34, 17, 7);
             }
         }
     }
 
     @Override
-    public void render(GuiGraphics guiGraphics, int mouseX, int mouseY, float delta) {
-        renderBackground(guiGraphics);
-        super.render(guiGraphics, mouseX, mouseY, delta);
-        renderTooltip(guiGraphics, mouseX, mouseY);
+    public void render(PoseStack pPoseStack, int mouseX, int mouseY, float delta) {
+        renderBackground(pPoseStack);
+        super.render(pPoseStack, mouseX, mouseY, delta);
+        renderTooltip(pPoseStack, mouseX, mouseY);
     }
+
 }

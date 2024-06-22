@@ -18,14 +18,14 @@ public class HellforgeMenu extends AbstractContainerMenu {
     private final ContainerData data;
 
     public HellforgeMenu(int pContainerId, Inventory inv, FriendlyByteBuf extraData) {
-        this(pContainerId, inv, inv.player.level().getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(6));
+        this(pContainerId, inv, inv.player.level.getBlockEntity(extraData.readBlockPos()), new SimpleContainerData(6));
     }
 
     public HellforgeMenu(int pContainerId, Inventory inv, BlockEntity entity, ContainerData data) {
         super(ModMenuTypes.HELLFORGE_MENU.get(), pContainerId);
         checkContainerSize(inv, 6);
         blockEntity = ((HellforgeBlockEntity) entity);
-        this.level = inv.player.level();
+        this.level = inv.player.level;
         this.data = data;
 
         addPlayerInventory(inv);

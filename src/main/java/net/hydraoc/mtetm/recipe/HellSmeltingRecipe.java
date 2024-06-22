@@ -9,6 +9,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.Container;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.*;
 import net.minecraft.world.level.Level;
@@ -30,17 +31,17 @@ public class HellSmeltingRecipe implements Recipe<Container> {
     }
 
     @Override
-    public boolean matches(Container pContainer, Level pLevel) {
-        if(pLevel.isClientSide()) {
+    public boolean matches(Container container, Level level) {
+        if(level.isClientSide()) {
             return false;
         }
 
-        return inputItems.get(0).test(pContainer.getItem(0));
+        return inputItems.get(0).test(container.getItem(1));
     }
 
     @Override
-    public ItemStack assemble(Container pContainer, RegistryAccess pRegistryAccess) {
-        return result.copy();
+    public ItemStack assemble(Container container) {
+        return result;
     }
 
     @Override
@@ -49,7 +50,7 @@ public class HellSmeltingRecipe implements Recipe<Container> {
     }
 
     @Override
-    public ItemStack getResultItem(RegistryAccess pRegistryAccess) {
+    public ItemStack getResultItem() {
         return result.copy();
     }
 
@@ -123,7 +124,7 @@ public class HellSmeltingRecipe implements Recipe<Container> {
                 ingredient.toNetwork(pBuffer);
             }
 
-            pBuffer.writeItemStack(pRecipe.getResultItem(null),false);
+            pBuffer.writeItemStack(pRecipe.getResultItem(),false);
             pBuffer.writeFloat(pRecipe.getExperience());
             pBuffer.writeInt(pRecipe.getCookingTime());
         }

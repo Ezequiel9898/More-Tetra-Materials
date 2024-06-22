@@ -37,7 +37,6 @@ public class JEIMenu implements IModPlugin {
 
     @Override
     public void registerGuiHandlers(IGuiHandlerRegistration registration) {
-        registration.addRecipeClickArea(HellforgeScreen.class, 54, 29, 24, 17,
-                HellSmeltingCategory.HELL_SMELTING_TYPE);
+        registration.addRecipeClickArea(HellforgeScreen.class, 54, 29, 24, 17, HellSmeltingCategory.HELL_SMELTING_TYPE);
     }
 }

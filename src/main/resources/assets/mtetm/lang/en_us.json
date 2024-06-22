@@ -73,5 +73,7 @@
   "block.mtetm.hellforge": "Hellforge",
   "container.hellforge": "Hellforge",
 
-  "sounds.mtetm.hellforge_lit": "Hellforge Smelting"
+  "sounds.mtetm.hellforge_lit": "Hellforge Smelting",
+  "block.mtetm.hell_smelting_jei": "Hell Smelting",
+  "block.mtetm.smashing_jei": "Material Smashing"
 }

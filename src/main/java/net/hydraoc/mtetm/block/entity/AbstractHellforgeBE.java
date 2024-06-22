@@ -11,12 +11,7 @@ import java.util.Map;
 import javax.annotation.Nullable;
 import net.minecraft.SharedConstants;
 import net.minecraft.Util;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.Holder;
-import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.*;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
@@ -87,7 +82,7 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
     public final RecipeManager.CachedCheck<Container, ? extends AbstractCookingRecipe> secondaryQuickCheck;
     LazyOptional<? extends IItemHandler>[] handlers;
 
-    protected AbstractHellforgeBE(BlockEntityType<?> p_154991_, BlockPos p_154992_, BlockState p_154993_, RecipeType<? extends HellSmeltingRecipe> p_154994_, RecipeType<? extends AbstractCookingRecipe> recipeType2) {
+    protected AbstractHellforgeBE(BlockEntityType<?> p_154991_, BlockPos p_154992_, BlockState p_154993_, RecipeType<? extends HellSmeltingRecipe> recipeType1, RecipeType<? extends AbstractCookingRecipe> recipeType2) {
         super(p_154991_, p_154992_, p_154993_);
         this.items = NonNullList.withSize(4, ItemStack.EMPTY);
         this.dataAccess = new ContainerData() {
@@ -117,9 +112,9 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
         };
         this.recipesUsed = new Object2IntOpenHashMap();
         this.handlers = SidedInvWrapper.create(this, new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH});
-        this.primaryQuickCheck = RecipeManager.createCheck(p_154994_);
+        this.primaryQuickCheck = RecipeManager.createCheck(recipeType1);
         this.secondaryQuickCheck = RecipeManager.createCheck(recipeType2);
-        this.primaryRecipeType = p_154994_;
+        this.primaryRecipeType = recipeType1;
         this.secondRecipeType = recipeType2;
     }
 
@@ -137,7 +132,7 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
     }
 
     private static void add(Map<Item, Integer> p_204303_, TagKey<Item> p_204304_, int p_204305_) {
-        Iterator var3 = BuiltInRegistries.ITEM.getTagOrEmpty(p_204304_).iterator();
+        Iterator var3 = Registry.ITEM.getTagOrEmpty(p_204304_).iterator();
 
         while(var3.hasNext()) {
             Holder<Item> holder = (Holder)var3.next();
@@ -254,12 +249,12 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
 
             int i = blockEntity.getMaxStackSize();
 
-            if (blockEntity.isLit(level, blockEntity) && blockEntity.canBurn(level.registryAccess(), recipe, blockEntity.items, i)) {
+            if (blockEntity.isLit(level, blockEntity) && blockEntity.canBurn(recipe, blockEntity.items, i)) {
                 ++blockEntity.cookingProgress;
                 if (blockEntity.cookingProgress == blockEntity.cookingTotalTime) {
                     blockEntity.cookingProgress = 0;
                     blockEntity.cookingTotalTime = getTotalCookTime(level, blockEntity);
-                    if (blockEntity.burn(level.registryAccess(), recipe, blockEntity.items, i)) {
+                    if (blockEntity.burn(recipe, blockEntity.items, i)) {
                         blockEntity.setRecipeUsed(recipe);
                     }
                     flag1 = true;
@@ -271,12 +266,12 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
 
     }
 
-    public boolean canBurn(RegistryAccess registry, @Nullable Recipe<AbstractHellforgeBE> recipe, NonNullList<ItemStack> itemStacks, int p_155008_) {
+    private boolean canBurn(@Nullable Recipe<AbstractHellforgeBE> recipe, NonNullList<ItemStack> itemStacks, int p_155008_) {
         if (!((ItemStack)itemStacks.get(0)).isEmpty()) {
             if(recipe == null){
                 return false;
             }
-            ItemStack itemstack = recipe.assemble(this, registry);
+            ItemStack itemstack = recipe.assemble(this);
             if (itemstack.isEmpty()) {
                 return false;
             } else {
@@ -284,7 +279,7 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
                 ItemStack itemStackByProduct = (ItemStack)itemStacks.get(3);
                 if (itemStackOutput.isEmpty() && itemStackByProduct.isEmpty()) {
                     return true;
-                } else if (!ItemStack.isSameItem(itemStackOutput, itemstack)) {
+                } else if (!itemStackOutput.sameItem(itemstack)) {
                     return false;
                 } else if (itemStackOutput.getCount() + itemstack.getCount() <= p_155008_ && itemStackOutput.getCount() + itemstack.getCount() <= itemStackOutput.getMaxStackSize()) {
                     return true;
@@ -297,10 +292,10 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
         }
     }
 
-    private boolean burn(RegistryAccess registry, @Nullable Recipe<AbstractHellforgeBE> recipe, NonNullList<ItemStack> itemStacks, int p_267157_) {
-        if (recipe != null && this.canBurn(registry, recipe, itemStacks, p_267157_)) {
+    private boolean burn(@Nullable Recipe<AbstractHellforgeBE> recipe, NonNullList<ItemStack> itemStacks, int p_155029_) {
+        if (recipe != null && this.canBurn(recipe, itemStacks, p_155029_)) {
             ItemStack itemstack = (ItemStack)itemStacks.get(0);
-            ItemStack itemstack1 = recipe.assemble(this, registry);
+            ItemStack itemstack1 = recipe.assemble(this);
             ItemStack itemstack2 = (ItemStack)itemStacks.get(2);
             if (itemstack2.isEmpty()) {
                 itemStacks.set(2, itemstack1.copy());
@@ -400,7 +395,11 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
     }
 
     public boolean stillValid(Player p_58340_) {
-        return Container.stillValidBlockEntity(this, p_58340_);
+        if (this.level.getBlockEntity(this.worldPosition) != this) {
+            return false;
+        } else {
+            return p_58340_.distanceToSqr((double)this.worldPosition.getX() + 0.5, (double)this.worldPosition.getY() + 0.5, (double)this.worldPosition.getZ() + 0.5) <= 64.0;
+        }
     }
 
     public boolean canPlaceItem(int p_58389_, ItemStack p_58390_) {
@@ -435,17 +434,8 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
     }
 
     public void awardUsedRecipesAndPopExperience(ServerPlayer p_155004_) {
-        List<Recipe<?>> list = this.getRecipesToAwardAndPopExperience(p_155004_.serverLevel(), p_155004_.position());
+        List<Recipe<?>> list = this.getRecipesToAwardAndPopExperience(p_155004_.getLevel(), p_155004_.position());
         p_155004_.awardRecipes(list);
-        Iterator var3 = list.iterator();
-
-        while(var3.hasNext()) {
-            Recipe<?> recipe = (Recipe)var3.next();
-            if (recipe != null) {
-                p_155004_.triggerRecipeCrafted(recipe, this.items);
-            }
-        }
-
         this.recipesUsed.clear();
     }
 
@@ -458,7 +448,7 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
             p_154996_.getRecipeManager().byKey((ResourceLocation)entry.getKey()).ifPresent((p_155023_) -> {
                 list.add(p_155023_);
                 try{
-                createExperience(p_154996_, p_154997_, entry.getIntValue(), ((HellSmeltingRecipe)p_155023_).getExperience());}
+                    createExperience(p_154996_, p_154997_, entry.getIntValue(), ((HellSmeltingRecipe)p_155023_).getExperience());}
                 catch (java.lang.ClassCastException e1){
                     try{
                         createExperience(p_154996_, p_154997_, entry.getIntValue(), ((AbstractCookingRecipe)p_155023_).getExperience());
@@ -518,4 +508,3 @@ public abstract class AbstractHellforgeBE extends BaseContainerBlockEntity imple
         this.handlers = SidedInvWrapper.create(this, new Direction[]{Direction.UP, Direction.DOWN, Direction.NORTH});
     }
 }
-

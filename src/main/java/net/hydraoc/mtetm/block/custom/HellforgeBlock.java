@@ -2,7 +2,6 @@ package net.hydraoc.mtetm.block.custom;
 
 import net.hydraoc.mtetm.block.entity.HellforgeBlockEntity;
 import net.hydraoc.mtetm.block.entity.ModBlockEntities;
-import net.hydraoc.mtetm.sound.ModSounds;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
